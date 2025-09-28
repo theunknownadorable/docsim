@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}DocSim - About{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2><i class="fas fa-info-circle"></i> About DocSim</h2>
+        <p class="lead">Comprehensive Diagnostic Simulator for Medical Education</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Our Mission</h5>
+                <p class="card-text">
+                    DocSim provides a safe, simulated environment for student doctors to practice clinical diagnosis 
+                    and risk assessment. Our goal is to minimize real-world patient risk by allowing students to 
+                    learn from mistakes, understand consequences, and refine their clinical reasoning skills.
+                </p>
+                
+                <h5 class="card-title mt-4">Key Features</h5>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <i class="fas fa-brain text-primary"></i>
+                        <strong>Dynamic Case Generation:</strong> AI-powered unique patient scenarios
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-flask text-success"></i>
+                        <strong>Interactive Laboratory Tests:</strong> Order and interpret diagnostic tests
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-spell-check text-info"></i>
+                        <strong>Fuzzy Matching:</strong> Intelligent diagnosis matching with typo tolerance
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-comments text-warning"></i>
+                        <strong>AI-Powered Feedback:</strong> Detailed explanations and learning guidance
+                    </li>
+                    <li class="list-group-item">
+                        <i class="fas fa-chart-line text-danger"></i>
+                        <strong>Progress Tracking:</strong> Monitor your diagnostic accuracy over time
+                    </li>
+                </ul>
+                
+                <h5 class="card-title mt-4">How It Works</h5>
+                <ol>
+                    <li><strong>Start a Case:</strong> Click "New Case" to generate a unique patient scenario</li>
+                    <li><strong>Gather Information:</strong> Review patient history, symptoms, and vital signs</li>
+                    <li><strong>Order Tests:</strong> Select and order relevant laboratory tests</li>
+                    <li><strong>Make Diagnosis:</strong> Submit your diagnostic conclusion</li>
+                    <li><strong>Receive Feedback:</strong> Learn from detailed AI analysis and explanations</li>
+                    <li><strong>Track Progress:</strong> Monitor your improvement on the dashboard</li>
+                </ol>
+                
+                <h5 class="card-title mt-4">Educational Benefits</h5>
+                <p class="card-text">
+                    DocSim transforms diagnostic training from passive reading into active, high-stakes 
+                    decision-making. Students experience the pressure and responsibility of clinical diagnosis 
+                    without risk to real patients, preparing them thoroughly for actual patient care.
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-user-md"></i> User Profile</h5>
+            </div>
+            <div class="card-body text-center">
+                <i class="fas fa-user-circle fa-5x text-muted mb-3"></i>
+                <h6>Dr. Student</h6>
+                <p class="text-muted">Medical Student</p>
+                <p><small>User ID: MS001</small></p>
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i> 
+                        In the full version, this will show your actual profile from Google Sign-In
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6><i class="fas fa-cogs"></i> System Status</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Core Simulator</span>
+                    <span class="badge bg-success">Active</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>AI Feedback</span>
+                    <span class="badge bg-success">Active</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Gemini API</span>
+                    <span class="badge bg-success">Active</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Firestore DB</span>
+                    <span class="badge bg-warning">Coming Soon</span>
+                </div>
+                <hr>
+                <small class="text-muted">
+                    This is version 1.0 - Basic Flask implementation with sample cases
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <h6><i class="fas fa-rocket"></i> Coming in Future Versions</h6>
+            <ul class="mb-0">
+                <li>Google Firestore for persistent user data storage</li>
+                <li>Advanced AI chatbot for mistake analysis</li>
+                <li>Google Sign-In authentication</li>
+                <li>Enhanced medical Q&A with Google Search grounding</li>
+                <li>More sophisticated case complexity and specialty focus</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+    <script>
+        function askQuestion() {
+            const input = document.getElementById('qa-input');
+            const chat = document.getElementById('qa-chat');
+            const question = input.value.trim();
+            
+            if (question) {
+                // Add user question to chat
+                chat.innerHTML += `<div class="mb-2"><strong>You:</strong> ${question}</div>`;
+                
+                // Simulate AI response (replace with actual API call later)
+                setTimeout(() => {
+                    chat.innerHTML += `<div class="mb-2 text-primary"><strong>AI Assistant:</strong> I'm a placeholder response. In the full version, I'll provide medical information using the Gemini API with Google Search grounding.</div>`;
+                    chat.scrollTop = chat.scrollHeight;
+                }, 1000);
+                
+                input.value = '';
+                chat.scrollTop = chat.scrollHeight;
+            }
+        }
+        
+        // Allow Enter key to submit question
+        document.getElementById('qa-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                askQuestion();
+            }
+        });
+    </script>
+</body>
+</html>

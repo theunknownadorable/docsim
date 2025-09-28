@@ -1,0 +1,307 @@
+{% extends "base.html" %}
+
+{% block title %}DocSim - Simulator{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2><i class="fas fa-stethoscope"></i> Diagnostic Simulator</h2>
+        
+        <div class="d-grid gap-2 d-md-flex justify-content-md-start mb-4">
+            <button class="btn btn-success" onclick="loadNewCase()">
+                <i class="fas fa-plus"></i> New Case
+            </button>
+            <button class="btn btn-info" onclick="showHistory()">
+                <i class="fas fa-history"></i> View History
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Case Display -->
+<div id="case-container" style="display: none;">
+    <div class="card case-card mb-4">
+        <div class="card-header">
+            <h4><i class="fas fa-user-injured"></i> Patient Case #<span id="case-id"></span></h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Patient History</h5>
+                    <p id="patient-history"></p>
+                    
+                    <h5>Presenting Symptoms</h5>
+                    <p id="symptoms"></p>
+                </div>
+                <div class="col-md-6">
+                    <h5>Vital Signs</h5>
+                    <div id="vital-signs"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Laboratory Tests -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-flask"></i> Laboratory Tests</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-md-8">
+                    <select class="form-select" id="test-select">
+                        <option value="">Select a test to order...</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-primary" onclick="orderTest()">
+                        <i class="fas fa-vial"></i> Order Test
+                    </button>
+                </div>
+            </div>
+            <div id="test-results"></div>
+        </div>
+    </div>
+
+    <!-- Diagnosis Submission -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-diagnoses"></i> Your Diagnosis</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                    <input type="text" class="form-control" id="diagnosis-input" placeholder="Enter your diagnosis...">
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-danger" onclick="submitDiagnosis()">
+                        <i class="fas fa-check"></i> Submit Diagnosis
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback -->
+    <div id="feedback-container" style="display: none;" class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-comment-medical"></i> Diagnostic Feedback</h5>
+        </div>
+        <div class="card-body" id="feedback-content">
+        </div>
+    </div>
+</div>
+
+<!-- Loading State -->
+<div id="loading" class="text-center" style="display: none;">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Loading new case...</p>
+</div>
+
+<!-- No Case State -->
+<div id="no-case" class="text-center">
+    <i class="fas fa-hospital fa-5x text-muted mb-3"></i>
+    <h3>Ready to Start</h3>
+    <p class="text-muted">Click "New Case" to begin your diagnostic simulation.</p>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentCase = null;
+let orderedTests = [];
+
+function loadNewCase() {
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('case-container').style.display = 'none';
+    document.getElementById('no-case').style.display = 'none';
+    document.getElementById('feedback-container').style.display = 'none';
+    
+    fetch('/api/new_case')
+        .then(response => response.json())
+        .then(data => {
+            currentCase = data;
+            displayCase(data);
+            orderedTests = [];
+            document.getElementById('test-results').innerHTML = '';
+            document.getElementById('diagnosis-input').value = '';
+        })
+        .catch(error => {
+            console.error('Error loading case:', error);
+            alert('Error loading case. Please try again.');
+        })
+        .finally(() => {
+            document.getElementById('loading').style.display = 'none';
+        });
+}
+
+function displayCase(caseData) {
+    document.getElementById('case-id').textContent = caseData.id;
+    document.getElementById('patient-history').textContent = caseData.patient_history;
+    document.getElementById('symptoms').textContent = caseData.symptoms;
+    
+    // Display vital signs
+    const vitalSigns = document.getElementById('vital-signs');
+    vitalSigns.innerHTML = '';
+    for (const [key, value] of Object.entries(caseData.vital_signs)) {
+        vitalSigns.innerHTML += `<p><strong>${key.replace('_', ' ').toUpperCase()}:</strong> ${value}</p>`;
+    }
+    
+    // Populate test options
+    const testSelect = document.getElementById('test-select');
+    testSelect.innerHTML = '<option value="">Select a test to order...</option>';
+    caseData.available_tests.forEach(test => {
+        testSelect.innerHTML += `<option value="${test}">${test}</option>`;
+    });
+    
+    document.getElementById('case-container').style.display = 'block';
+}
+
+function orderTest() {
+    const testSelect = document.getElementById('test-select');
+    const testName = testSelect.value;
+    
+    if (!testName) {
+        alert('Please select a test to order.');
+        return;
+    }
+    
+    if (orderedTests.includes(testName)) {
+        alert('You have already ordered this test.');
+        return;
+    }
+    
+    fetch('/api/order_test', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({test_name: testName})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            alert(data.error);
+        } else {
+            orderedTests.push(testName);
+            displayTestResult(data.test_name, data.result);
+            testSelect.value = '';
+        }
+    })
+    .catch(error => {
+        console.error('Error ordering test:', error);
+        alert('Error ordering test. Please try again.');
+    });
+}
+
+function displayTestResult(testName, result) {
+    const resultsContainer = document.getElementById('test-results');
+    const resultDiv = document.createElement('div');
+    resultDiv.className = 'test-result';
+    resultDiv.innerHTML = `<strong>${testName}:</strong> ${result}`;
+    resultsContainer.appendChild(resultDiv);
+}
+
+function submitDiagnosis() {
+    const diagnosis = document.getElementById('diagnosis-input').value.trim();
+    
+    if (!diagnosis) {
+        alert('Please enter your diagnosis.');
+        return;
+    }
+    
+    fetch('/api/submit_diagnosis', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({diagnosis: diagnosis})
+    })
+    .then(response => response.json())
+    .then(data => {
+        displayFeedback(data);
+    })
+    .catch(error => {
+        console.error('Error submitting diagnosis:', error);
+        alert('Error submitting diagnosis. Please try again.');
+    });
+}
+
+function displayFeedback(feedback) {
+    const container = document.getElementById('feedback-container');
+    const content = document.getElementById('feedback-content');
+    
+    const feedbackClass = feedback.is_correct ? 'feedback-correct' : 'feedback-incorrect';
+    container.className = `card mb-4 ${feedbackClass}`;
+    
+    const statusIcon = feedback.is_correct ? 
+        '<i class="fas fa-check-circle text-success"></i>' : 
+        '<i class="fas fa-times-circle text-danger"></i>';
+    
+    const statusText = feedback.is_correct ? 'Correct!' : 'Incorrect';
+    
+    content.innerHTML = `
+        <div class="alert ${feedback.is_correct ? 'alert-success' : 'alert-danger'}">
+            <h5>${statusIcon} ${statusText}</h5>
+            <p><strong>Your diagnosis:</strong> ${feedback.submitted_diagnosis}</p>
+            <p><strong>Correct diagnosis:</strong> ${feedback.correct_diagnosis}</p>
+            ${!feedback.is_correct ? `<p><strong>Similarity score:</strong> ${(feedback.similarity_score * 100).toFixed(1)}%</p>` : ''}
+        </div>
+        
+        <div class="mb-3">
+            <h6>Explanation:</h6>
+            <p>${feedback.explanation}</p>
+        </div>
+        
+        <div class="mb-3">
+            <h6>Differential Diagnoses:</h6>
+            <ul>
+                ${feedback.differential_diagnoses.map(dx => `<li>${dx}</li>`).join('')}
+            </ul>
+        </div>
+        
+        <div class="alert alert-warning">
+            <h6><i class="fas fa-exclamation-triangle"></i> Consequences of Misdiagnosis:</h6>
+            <p>${feedback.consequences}</p>
+        </div>
+    `;
+    
+    container.style.display = 'block';
+    container.scrollIntoView({behavior: 'smooth'});
+}
+
+function showHistory() {
+    fetch('/api/history')
+        .then(response => response.json())
+        .then(data => {
+            if (data.length === 0) {
+                alert('No diagnostic history available yet.');
+                return;
+            }
+            
+            let historyText = 'Recent Diagnostic History:\n\n';
+            data.slice(-5).forEach((attempt, index) => {
+                const status = attempt.is_correct ? '✓' : '✗';
+                historyText += `${status} Case ${attempt.case_id}: ${attempt.submitted_diagnosis} (${attempt.is_correct ? 'Correct' : 'Incorrect'})\n`;
+            });
+            
+            alert(historyText);
+        })
+        .catch(error => {
+            console.error('Error loading history:', error);
+            alert('Error loading history.');
+        });
+}
+
+// Allow Enter key to submit diagnosis
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('diagnosis-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            submitDiagnosis();
+        }
+    });
+});
+</script>
+{% endblock %}

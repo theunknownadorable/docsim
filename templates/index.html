@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="jumbotron bg-light p-5 rounded">
+            <h1 class="display-4">Welcome to DocSim</h1>
+            <p class="lead">A comprehensive diagnostic simulator designed for medical students to practice clinical diagnosis and risk assessment in a safe, controlled environment.</p>
+            <hr class="my-4">
+            <p>Learn from mistakes, understand consequences, and refine your clinical reasoning skills with AI-powered feedback.</p>
+            <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                <a class="btn btn-primary btn-lg" href="/simulator" role="button">
+                    <i class="fas fa-play"></i> Start Simulator
+                </a>
+                <a class="btn btn-outline-secondary btn-lg" href="/dashboard" role="button">
+                    <i class="fas fa-chart-line"></i> View Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-brain fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">Dynamic Cases</h5>
+                <p class="card-text">Experience unique, AI-generated patient scenarios that challenge your diagnostic skills.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-microscope fa-3x text-success mb-3"></i>
+                <h5 class="card-title">Interactive Labs</h5>
+                <p class="card-text">Order and interpret laboratory tests to support your diagnostic reasoning.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-comments fa-3x text-info mb-3"></i>
+                <h5 class="card-title">AI Feedback</h5>
+                <p class="card-text">Receive detailed explanations and learn from your diagnostic decisions.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

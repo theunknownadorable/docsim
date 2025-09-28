@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - DocSim{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Dashboard</h2>
+    <a href="/download_report" class="btn btn-success">
+        <i class="fas fa-download"></i> Download Report
+    </a>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-center shadow-sm p-3 mb-3">
+            <h5>Cases Completed</h5>
+            <h3 id="total-cases">0</h3>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center shadow-sm p-3 mb-3">
+            <h5>Accuracy</h5>
+            <h3 id="accuracy-rate">0%</h3>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center shadow-sm p-3 mb-3">
+            <h5>Best Streak</h5>
+            <h3 id="best-streak">0</h3>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <canvas id="accuracyChart" height="200"></canvas>
+    </div>
+    <div class="col-md-6">
+        <canvas id="resultChart" height="200"></canvas>
+    </div>
+</div>
+
+<div id="history">
+    <h3>Case History</h3>
+    <div id="history-cards" class="row row-cols-1 row-cols-md-2 g-3">
+        <p class="text-muted">Loading history...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+async function loadDashboardData() {
+    try {
+        const res = await fetch("/api/history");
+        const data = await res.json();
+
+        // Stats
+        document.getElementById("total-cases").textContent = data.cases_completed;
+        document.getElementById("accuracy-rate").textContent = data.accuracy + '%';
+        document.getElementById("best-streak").textContent = data.best_streak;
+
+        // History cards
+        const container = document.getElementById("history-cards");
+        container.innerHTML = "";
+        if (data.history.length === 0) {
+            container.innerHTML = '<p class="text-muted">No cases completed yet.</p>';
+        } else {
+            data.history.slice().reverse().forEach((h, i) => {
+                const card = document.createElement('div');
+                card.className = "col";
+                card.innerHTML = `
+                    <div class="card shadow-sm h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Case ${data.history.length - i}</h5>
+                            <p><b>Your Diagnosis:</b> ${h.submitted_diagnosis}</p>
+                            <p><b>Correct Diagnosis:</b> ${h.feedback.correct_diagnosis}</p>
+                            <p><b>Result:</b> ${h.feedback.is_correct ? "✅ Correct" : "❌ Wrong"}</p>
+                        </div>
+                    </div>`;
+                container.appendChild(card);
+            });
+        }
+
+        // Charts
+        const timestamps = data.history.map(h => new Date(h.timestamp).toLocaleDateString());
+        const accuracyData = data.history.map((h,i) => {
+            const correctCount = data.history.slice(0,i+1).filter(x => x.feedback.is_correct).length;
+            return Math.round(correctCount / (i+1) * 100);
+        });
+
+        const correctWrong = {
+            labels: ['Correct', 'Wrong'],
+            datasets: [{
+                data: [data.history.filter(h=>h.feedback.is_correct).length,
+                       data.history.filter(h=>!h.feedback.is_correct).length],
+                backgroundColor: ['#28a745','#dc3545']
+            }]
+        };
+
+        new Chart(document.getElementById('accuracyChart').getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: timestamps,
+                datasets: [{
+                    label: 'Accuracy Over Time (%)',
+                    data: accuracyData,
+                    backgroundColor: 'rgba(0,123,255,0.2)',
+                    borderColor: 'rgba(0,123,255,1)',
+                    fill: true,
+                    tension: 0.3
+                }]
+            },
+            options: { responsive:true, plugins:{legend:{display:true}} }
+        });
+
+        new Chart(document.getElementById('resultChart').getContext('2d'), {
+            type: 'doughnut',
+            data: correctWrong,
+            options: { responsive:true, plugins:{legend:{position:'bottom'}} }
+        });
+
+    } catch (err) {
+        console.error(err);
+        document.getElementById("history-cards").innerHTML = '<p class="text-danger">Failed to load history.</p>';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', loadDashboardData);
+</script>
+{% endblock %}

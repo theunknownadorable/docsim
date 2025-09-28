@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DocSim Report - {{ doctor }}</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        h2, h3 {
+            text-align: center;
+        }
+        .chart-container {
+            width: 100%;
+            margin: 20px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #333;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        .correct {
+            color: green;
+            font-weight: bold;
+        }
+        .wrong {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h2>DocSim Report</h2>
+    <h3>Doctor: {{ doctor }}</h3>
+
+    <div class="chart-container">
+        <canvas id="accuracyOverTime" width="600" height="300"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="correctWrongChart" width="600" height="300"></canvas>
+    </div>
+
+    <h3>Case History</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Date</th>
+                <th>Your Diagnosis</th>
+                <th>Correct Diagnosis</th>
+                <th>Result</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for h in history %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ h.timestamp.split("T")[0] }}</td>
+                <td>{{ h.submitted_diagnosis }}</td>
+                <td>{{ h.feedback.correct_diagnosis }}</td>
+                <td class="{{ 'correct' if h.feedback.is_correct else 'wrong' }}">
+                    {{ 'Correct' if h.feedback.is_correct else 'Wrong' }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <script>
+        // Accuracy over time chart
+        try {
+            const ctx1 = document.getElementById('accuracyOverTime').getContext('2d');
+            new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: {{ date_labels | tojson }},
+                    datasets: [{
+                        label: 'Accuracy Over Time (%)',
+                        data: {{ accuracy_over_time | tojson }},
+                        borderColor: 'rgba(0,123,255,1)',
+                        backgroundColor: 'rgba(0,123,255,0.2)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: true }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, max: 100 }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error rendering accuracy chart:', error);
+        }
+    
+        // Correct vs Wrong chart
+        try {
+            const ctx2 = document.getElementById('correctWrongChart').getContext('2d');
+            new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Correct', 'Wrong'],
+                    datasets: [{
+                        data: [{{ correct }}, {{ wrong }}],
+                        backgroundColor: ['#28a745','#dc3545']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        } catch (error) {
+            console.error('Error rendering results chart:', error);
+        }
+    </script>
+    
+</body>
+</html>
