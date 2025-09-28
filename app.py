@@ -5,6 +5,9 @@ import google.generativeai as genai
 import pdfkit
 import base64
 from io import BytesIO
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 app.secret_key = os.environ.get("DOCSIM_SECRET_KEY", "docsim-dev-secret")
